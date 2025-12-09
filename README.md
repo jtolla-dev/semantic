@@ -82,6 +82,9 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
 strata/
 ├── README.md                    # This file
 ├── CLAUDE.md                    # Claude Code guidance
+├── .gitignore                   # Git ignore patterns
+├── .pre-commit-config.yaml      # Pre-commit hooks config
+├── pyproject.toml               # Root config for ruff, mypy, etc.
 ├── docker-compose.yml           # Docker services (db, api, worker, agent, samba)
 │
 ├── strata/                      # Control plane (FastAPI)
@@ -125,6 +128,7 @@ strata/
 │   ├── Dockerfile               # Agent container image
 │   ├── config.example.yaml      # Example configuration
 │   └── strata_agent/
+│       ├── __init__.py          # Package init
 │       ├── config.py            # YAML config loading
 │       ├── scanner.py           # File system scanner
 │       ├── client.py            # Strata API client
@@ -232,6 +236,28 @@ Final score: `min(100, sensitivity_score + principal_breadth_score)`
 Exposure levels: LOW (0-39), MEDIUM (40-69), HIGH (70-100)
 
 ## Development
+
+### Code Quality
+
+Pre-commit hooks are configured for code quality checks:
+
+```bash
+# Install pre-commit hooks (first time setup)
+uvx pre-commit install
+
+# Run all checks manually
+uvx pre-commit run --all-files
+
+# Run specific check
+uvx pre-commit run ruff --all-files
+```
+
+Configured checks:
+- **ruff**: Linting and formatting (replaces black, isort, flake8)
+- **mypy**: Type checking (manual stage - run with `uvx pre-commit run mypy --all-files`)
+- **vulture**: Dead code detection
+- **bandit**: Security vulnerability scanning
+- General checks: trailing whitespace, YAML/TOML validation, large files, merge conflicts
 
 ### Running Tests
 

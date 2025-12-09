@@ -49,6 +49,16 @@ docker-compose exec api pytest
 docker-compose exec api pytest -v tests/test_extraction.py  # Single file
 ```
 
+### Code Quality
+```bash
+# Pre-commit hooks run automatically on commit
+# To run manually:
+uvx pre-commit run --all-files
+
+# Run type checking (manual stage)
+uvx pre-commit run mypy --all-files
+```
+
 ## Architecture
 
 The system consists of five main components:
@@ -86,6 +96,14 @@ The system consists of five main components:
 
 **Agent:**
 - `strata_agent/strata_agent/scanner.py` - File system scanner
+- `strata_agent/strata_agent/client.py` - Strata API client
+- `strata_agent/strata_agent/config.py` - YAML config loading
+- `strata_agent/strata_agent/main.py` - CLI entrypoint
+
+**Configuration:**
+- `pyproject.toml` (root) - Shared tool config (ruff, mypy, bandit, vulture)
+- `.pre-commit-config.yaml` - Pre-commit hooks configuration
+- `.gitignore` - Git ignore patterns
 
 ## Key Technical Decisions
 
