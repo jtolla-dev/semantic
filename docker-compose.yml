@@ -52,6 +52,52 @@ services:
         condition: service_healthy
     volumes:
       - ./data:/data
+      - ./dev/samples:/mnt/documents:ro
+
+  # SMB server with sample documents
+  samba:
+    image: dperson/samba
+    ports:
+      - "445:445"
+    volumes:
+      - ./dev/samba/smb.conf:/etc/samba/smb.conf:ro
+      - ./dev/samples:/shares/documents:ro
+    command: ["-p", "-n", "-s", "documents;/shares/documents;yes;no;yes;all"]
+
+  # Init service to bootstrap tenant/estate/share
+  init:
+    build:
+      context: ./dev
+      dockerfile: Dockerfile.init
+    environment:
+      API_BASE_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - shared_config:/config
+
+  # Strata agent for scanning documents
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    environment:
+      STRATA_API_BASE_URL: http://api:8000
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    volumes:
+      - ./dev/agent-config.yaml:/config/config.yaml:ro
+      - shared_config:/config
+      - ./dev/samples:/mnt/documents:ro
+    command: >
+      sh -c '
+        if [ -f /config/api-key ]; then
+          export STRATA_API_KEY=$$(cat /config/api-key);
+        fi;
+        strata-agent --config /config/config.yaml
+      '
 
 volumes:
   postgres_data:

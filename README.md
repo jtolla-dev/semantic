@@ -82,8 +82,7 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
 strata/
 ├── README.md                    # This file
 ├── CLAUDE.md                    # Claude Code guidance
-├── docker-compose.yml           # Core Docker services (db, api, worker)
-├── docker-compose.e2e.yml       # End-to-end dev environment (adds agent, samba)
+├── docker-compose.yml           # Docker services (db, api, worker, agent, samba)
 │
 ├── backend/                     # Control plane (FastAPI)
 │   ├── pyproject.toml           # Python dependencies
@@ -152,96 +151,23 @@ strata/
 
 ## Quick Start
 
-### 1. Start Services
-
 ```bash
-# Start Postgres, API, and worker
-docker-compose up -d
+# Start everything (db, api, worker, samba, agent)
+docker-compose up --build
 
-# Run database migrations
-docker-compose exec api alembic upgrade head
-```
-
-### End-to-End Environment
-
-For a complete development environment with SMB server, sample documents, and the Strata agent:
-
-```bash
-# Start everything including agent and sample documents
-docker-compose -f docker-compose.yml -f docker-compose.e2e.yml up --build
-
-# The init container will automatically:
-# 1. Wait for the API to be ready
-# 2. Create a dev tenant with API key
-# 3. Create an estate and share
-# 4. Pass the API key to the agent
-
-# The agent will then scan the sample documents in dev/samples/
+# The init container automatically:
+# 1. Waits for the API to be ready
+# 2. Creates a dev tenant with API key
+# 3. Creates an estate and share
+# 4. Passes the API key to the agent
+#
+# The agent then scans the sample documents in dev/samples/
 ```
 
 Sample documents include:
 - **Contracts**: Master Service Agreement, NDA
 - **Policies**: Data Classification Policy, Acceptable Use Policy
 - **RFCs**: Kubernetes Migration, API Versioning Strategy
-
-### 2. Create a Tenant
-
-```bash
-curl -X POST http://localhost:8000/v0/admin/tenant \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Acme Corp"}'
-
-# Response includes API key:
-# {"id": "...", "name": "Acme Corp", "api_key": "strata_xxxxx..."}
-```
-
-### 3. Create an Estate and Share
-
-```bash
-export API_KEY="strata_xxxxx..."
-
-# Create estate
-curl -X POST http://localhost:8000/v0/admin/estate \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "HQ File Server"}'
-
-# Create share (use estate_id from response)
-curl -X POST http://localhost:8000/v0/admin/share \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "estate_id": "...",
-    "name": "HRShare",
-    "share_type": "SMB",
-    "root_path": "/mnt/hrshare"
-  }'
-```
-
-### 4. Configure and Run Agent
-
-```bash
-cd agent
-cp config.example.yaml config.yaml
-# Edit config.yaml with your API key and share mount points
-
-uv sync
-uv run strata-agent --config config.yaml --once
-```
-
-### 5. Query Sensitive Content
-
-```bash
-curl -X POST http://localhost:8000/v0/sensitivity/find \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sensitivity_types": ["PERSONAL_DATA", "FINANCIAL_DATA"],
-    "exposure_levels": ["HIGH"],
-    "page": 1,
-    "page_size": 50
-  }'
-```
 
 ## API Reference
 
