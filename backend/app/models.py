@@ -57,6 +57,16 @@ class ExposureLevel(str, enum.Enum):
 class JobType(str, enum.Enum):
     EXTRACT_CONTENT = "EXTRACT_CONTENT"
     ENRICH_CHUNKS = "ENRICH_CHUNKS"
+    CLASSIFY_DOCUMENT = "CLASSIFY_DOCUMENT"
+    EXTRACT_SEMANTICS = "EXTRACT_SEMANTICS"
+    COMPUTE_DIFF = "COMPUTE_DIFF"
+
+
+class DocType(str, enum.Enum):
+    CONTRACT = "CONTRACT"
+    POLICY = "POLICY"
+    RFC = "RFC"
+    OTHER = "OTHER"
 
 
 class JobStatus(str, enum.Enum):
@@ -303,6 +313,18 @@ class Document(Base):
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
+    # v0.1: Versioning
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    previous_version_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("document.id", ondelete="SET NULL"), nullable=True
+    )
+
+    # v0.1: Document type classification
+    doc_type: Mapped[DocType | None] = mapped_column(Enum(DocType), nullable=True)
+
+    # v0.1: Structured semantic fields (JSON)
+    structured_fields = mapped_column(JSONB, nullable=True)
+
     # Relationships
     file: Mapped["File"] = relationship(back_populates="documents")
     chunks: Mapped[list["Chunk"]] = relationship(back_populates="document", cascade="all, delete")
@@ -311,6 +333,9 @@ class Document(Base):
     )
     exposure: Mapped["DocumentExposure | None"] = relationship(
         back_populates="document", cascade="all, delete", uselist=False
+    )
+    previous_version: Mapped["Document | None"] = relationship(
+        "Document", remote_side="Document.id", uselist=False
     )
 
 
@@ -332,6 +357,13 @@ class Chunk(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
+
+    # v0.1: Section path for hierarchical structure ["Section 1", "1.2", "Termination"]
+    section_path = mapped_column(JSONB, nullable=True)
+
+    # v0.1: LLM-safe views
+    redacted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    summary_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "document_id", "chunk_index", name="uq_chunk_index"),
@@ -488,4 +520,189 @@ class QueryLog(Base):
     parameters = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+
+
+# ============================================================================
+# v0.1: Agents & Policies
+# ============================================================================
+
+
+class Agent(Base):
+    """An AI agent that can access the semantic layer."""
+
+    __tablename__ = "agent"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    api_key_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+
+    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_agent_name"),)
+
+    # Relationships
+    policies: Mapped[list["AgentPolicy"]] = relationship(
+        back_populates="agent", cascade="all, delete"
+    )
+    interactions: Mapped[list["Interaction"]] = relationship(back_populates="agent")
+
+
+class Policy(Base):
+    """A policy that controls what agents can see and how."""
+
+    __tablename__ = "policy"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    config = mapped_column(JSONB, nullable=False)  # Full policy configuration
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_policy_name"),)
+
+    # Relationships
+    agents: Mapped[list["AgentPolicy"]] = relationship(
+        back_populates="policy", cascade="all, delete"
+    )
+
+
+class AgentPolicy(Base):
+    """Many-to-many relationship between agents and policies."""
+
+    __tablename__ = "agent_policy"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    agent_id: Mapped[UUID] = mapped_column(
+        ForeignKey("agent.id", ondelete="CASCADE"), nullable=False
+    )
+    policy_id: Mapped[UUID] = mapped_column(
+        ForeignKey("policy.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+
+    __table_args__ = (UniqueConstraint("agent_id", "policy_id", name="uq_agent_policy"),)
+
+    # Relationships
+    agent: Mapped["Agent"] = relationship(back_populates="policies")
+    policy: Mapped["Policy"] = relationship(back_populates="agents")
+
+
+# ============================================================================
+# v0.1: RAG Observability & Interaction Traces
+# ============================================================================
+
+
+class Interaction(Base):
+    """A single interaction with the semantic layer (search, answer, etc.)."""
+
+    __tablename__ = "interaction"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    agent_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("agent.id", ondelete="SET NULL"), nullable=True
+    )
+    user_id: Mapped[str | None] = mapped_column(Text, nullable=True)  # External user ID
+    interaction_type: Mapped[str] = mapped_column(Text, nullable=False)  # search_chunks, answer_with_evidence
+    query: Mapped[str] = mapped_column(Text, nullable=False)
+    scope = mapped_column(JSONB, nullable=True)  # Filters applied
+    answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_coverage: Mapped[float | None] = mapped_column(nullable=True)
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+
+    __table_args__ = (
+        Index("ix_interaction_tenant_created", "tenant_id", "created_at"),
+        Index("ix_interaction_agent", "tenant_id", "agent_id"),
+    )
+
+    # Relationships
+    agent: Mapped["Agent | None"] = relationship(back_populates="interactions")
+    chunks: Mapped[list["InteractionChunk"]] = relationship(
+        back_populates="interaction", cascade="all, delete"
+    )
+
+
+class InteractionChunk(Base):
+    """A chunk retrieved during an interaction (part of the retrieval trace)."""
+
+    __tablename__ = "interaction_chunk"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    interaction_id: Mapped[UUID] = mapped_column(
+        ForeignKey("interaction.id", ondelete="CASCADE"), nullable=False
+    )
+    chunk_id: Mapped[UUID] = mapped_column(
+        ForeignKey("chunk.id", ondelete="CASCADE"), nullable=False
+    )
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    score: Mapped[float | None] = mapped_column(nullable=True)
+    view_type: Mapped[str] = mapped_column(Text, nullable=False, default="raw")  # raw, redacted, summary
+    was_filtered: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    filter_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (Index("ix_interaction_chunk_interaction", "interaction_id"),)
+
+    # Relationships
+    interaction: Mapped["Interaction"] = relationship(back_populates="chunks")
+
+
+# ============================================================================
+# v0.1: Semantic Diff Results
+# ============================================================================
+
+
+class SemanticDiffResult(Base):
+    """Cached result of a semantic diff between two document versions."""
+
+    __tablename__ = "semantic_diff_result"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    document_id: Mapped[UUID] = mapped_column(
+        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+    )
+    from_version_id: Mapped[UUID] = mapped_column(
+        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+    )
+    to_version_id: Mapped[UUID] = mapped_column(
+        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+    )
+    field_changes = mapped_column(JSONB, nullable=False)  # Changes to structured fields
+    section_changes = mapped_column(JSONB, nullable=False)  # Section-level changes
+    summary: Mapped[str] = mapped_column(Text, nullable=False)  # Natural language summary
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+
+    __table_args__ = (
+        UniqueConstraint("from_version_id", "to_version_id", name="uq_semantic_diff_versions"),
     )

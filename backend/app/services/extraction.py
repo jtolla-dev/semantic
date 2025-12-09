@@ -136,6 +136,7 @@ class ChunkSpec(BaseModel):
     text: str
     char_start: int
     char_end: int
+    section_path: list[str] | None = None  # Hierarchical path for type-aware chunking
 
 
 def normalize_whitespace(text: str) -> str:
@@ -209,3 +210,279 @@ def chunk_text(
             break
 
     return chunks
+
+
+# ============================================================================
+# Type-aware chunking (v0.1)
+# ============================================================================
+
+# Target chunk size in characters (~300-600 tokens ≈ 1200-2400 chars)
+TYPE_AWARE_CHUNK_SIZE = 1800
+TYPE_AWARE_OVERLAP = 300
+
+# Patterns for detecting section boundaries
+CONTRACT_SECTION_PATTERNS = [
+    # Numbered clauses: "1.", "1.1", "1.1.1", "Article 1", "Section 1"
+    re.compile(r"^(?:article|section|clause)?\s*(\d+(?:\.\d+)*\.?)\s+(.+)", re.IGNORECASE | re.MULTILINE),
+    # Roman numerals: "I.", "II.", "III."
+    re.compile(r"^((?:X{0,3})?(?:IX|IV|V?I{0,3})\.)\s+(.+)", re.MULTILINE),
+    # Lettered sections: "(a)", "(b)", "(i)", "(ii)"
+    re.compile(r"^\(([a-z]|[ivx]+)\)\s+(.+)", re.IGNORECASE | re.MULTILINE),
+]
+
+RFC_SECTION_PATTERNS = [
+    # Markdown headings: "# Title", "## Section", "### Subsection"
+    re.compile(r"^(#{1,6})\s+(.+)", re.MULTILINE),
+    # Numbered sections: "1. Introduction", "1.1 Background"
+    re.compile(r"^(\d+(?:\.\d+)*\.?)\s+([A-Z].+)", re.MULTILINE),
+    # ALL CAPS headings
+    re.compile(r"^([A-Z][A-Z\s]{4,})$", re.MULTILINE),
+]
+
+POLICY_SECTION_PATTERNS = [
+    # Numbered sections
+    re.compile(r"^(\d+(?:\.\d+)*\.?)\s+(.+)", re.MULTILINE),
+    # Markdown headings
+    re.compile(r"^(#{1,6})\s+(.+)", re.MULTILINE),
+    # ALL CAPS headings
+    re.compile(r"^([A-Z][A-Z\s]{4,})$", re.MULTILINE),
+]
+
+
+class Section:
+    """Represents a detected section in a document."""
+
+    def __init__(
+        self,
+        heading: str,
+        level: int,
+        start_pos: int,
+        end_pos: int | None = None,
+        content: str = "",
+        number: str | None = None,
+    ):
+        self.heading = heading
+        self.level = level
+        self.start_pos = start_pos
+        self.end_pos = end_pos
+        self.content = content
+        self.number = number
+        self.children: list["Section"] = []
+        self.parent: "Section | None" = None
+
+    def get_path(self) -> list[str]:
+        """Get hierarchical path from root to this section."""
+        path = []
+        current = self
+        while current:
+            label = current.number or current.heading
+            if label:
+                path.insert(0, label.strip())
+            current = current.parent
+        return path
+
+
+def detect_sections(text: str, patterns: list[re.Pattern]) -> list[Section]:
+    """
+    Detect section boundaries in text using the provided patterns.
+
+    Returns a list of Section objects with detected boundaries.
+    """
+    matches = []
+
+    for pattern in patterns:
+        for match in pattern.finditer(text):
+            groups = match.groups()
+            if len(groups) >= 2:
+                # Pattern has number/marker and title
+                marker, title = groups[0], groups[1]
+                heading = title.strip()
+                number = marker.strip()
+                # Determine level from marker
+                if marker.startswith("#"):
+                    level = len(marker)
+                elif "." in marker:
+                    level = marker.count(".") + 1
+                else:
+                    level = 1
+            else:
+                # Pattern has only heading (like ALL CAPS)
+                heading = groups[0].strip()
+                number = None
+                level = 1
+
+            matches.append({
+                "heading": heading,
+                "number": number,
+                "level": level,
+                "start": match.start(),
+                "end": match.end(),
+            })
+
+    # Sort by position and remove duplicates/overlaps
+    matches.sort(key=lambda m: m["start"])
+    filtered = []
+    last_end = -1
+    for m in matches:
+        if m["start"] >= last_end:
+            filtered.append(m)
+            last_end = m["end"]
+
+    # Create Section objects with end positions
+    sections = []
+    for i, m in enumerate(filtered):
+        next_start = filtered[i + 1]["start"] if i + 1 < len(filtered) else len(text)
+        section = Section(
+            heading=m["heading"],
+            level=m["level"],
+            start_pos=m["start"],
+            end_pos=next_start,
+            content=text[m["end"]:next_start].strip(),
+            number=m["number"],
+        )
+        sections.append(section)
+
+    # Build hierarchy based on levels
+    if sections:
+        stack: list[Section] = []
+        for section in sections:
+            while stack and stack[-1].level >= section.level:
+                stack.pop()
+            if stack:
+                section.parent = stack[-1]
+                stack[-1].children.append(section)
+            stack.append(section)
+
+    return sections
+
+
+def chunk_section(
+    section: Section,
+    chunk_size: int = TYPE_AWARE_CHUNK_SIZE,
+    overlap: int = TYPE_AWARE_OVERLAP,
+) -> list[ChunkSpec]:
+    """
+    Chunk a single section, preserving section_path metadata.
+
+    If section content is small enough, returns a single chunk.
+    Otherwise, splits into overlapping chunks with the same section_path.
+    """
+    text = section.content
+    section_path = section.get_path()
+
+    if not text.strip():
+        return []
+
+    # If content fits in one chunk, return as single chunk
+    if len(text) <= chunk_size:
+        return [
+            ChunkSpec(
+                index=0,
+                text=text,
+                char_start=section.start_pos,
+                char_end=section.end_pos or (section.start_pos + len(text)),
+                section_path=section_path,
+            )
+        ]
+
+    # Otherwise, split into multiple chunks
+    chunks = []
+    start = 0
+    idx = 0
+
+    while start < len(text):
+        end = min(len(text), start + chunk_size)
+
+        # Try to break at sentence boundary
+        if end < len(text):
+            search_start = start + int(chunk_size * 0.7)
+            for i in range(end, search_start, -1):
+                if text[i - 1] in ".!?\n":
+                    end = i
+                    break
+
+        chunk_content = text[start:end].strip()
+        if chunk_content:
+            chunks.append(
+                ChunkSpec(
+                    index=idx,
+                    text=chunk_content,
+                    char_start=section.start_pos + start,
+                    char_end=section.start_pos + end,
+                    section_path=section_path,
+                )
+            )
+            idx += 1
+
+        new_start = end - overlap
+        if new_start <= start:
+            new_start = end
+        start = new_start
+
+        if start >= len(text):
+            break
+
+    return chunks
+
+
+def chunk_text_type_aware(
+    text: str,
+    doc_type: str | None = None,
+    chunk_size: int = TYPE_AWARE_CHUNK_SIZE,
+    overlap: int = TYPE_AWARE_OVERLAP,
+) -> list[ChunkSpec]:
+    """
+    Split text into chunks based on document type.
+
+    For CONTRACT, POLICY, and RFC documents, attempts to preserve
+    semantic boundaries (clauses, sections, headings) and includes
+    section_path metadata.
+
+    For OTHER or unrecognized types, falls back to standard chunking.
+
+    Args:
+        text: The text to chunk
+        doc_type: Document type (CONTRACT, POLICY, RFC, OTHER)
+        chunk_size: Maximum characters per chunk
+        overlap: Overlap between chunks
+
+    Returns:
+        List of ChunkSpec objects with section_path when available
+    """
+    text = normalize_whitespace(text)
+
+    if not text:
+        return []
+
+    # Select patterns based on doc type
+    patterns = []
+    if doc_type == "CONTRACT":
+        patterns = CONTRACT_SECTION_PATTERNS
+    elif doc_type == "RFC":
+        patterns = RFC_SECTION_PATTERNS
+    elif doc_type == "POLICY":
+        patterns = POLICY_SECTION_PATTERNS
+
+    # Try type-aware chunking if we have patterns
+    if patterns:
+        sections = detect_sections(text, patterns)
+
+        if sections:
+            all_chunks = []
+            global_idx = 0
+
+            for section in sections:
+                section_chunks = chunk_section(section, chunk_size, overlap)
+                for chunk in section_chunks:
+                    chunk.index = global_idx
+                    all_chunks.append(chunk)
+                    global_idx += 1
+
+            # If we got chunks, return them
+            if all_chunks:
+                logger.info(f"Type-aware chunking ({doc_type}): {len(sections)} sections, {len(all_chunks)} chunks")
+                return all_chunks
+
+    # Fall back to standard chunking
+    logger.info(f"Falling back to standard chunking for doc_type={doc_type}")
+    return chunk_text(text, chunk_size, overlap)

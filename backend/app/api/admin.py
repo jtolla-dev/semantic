@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import generate_api_key, get_tenant_context, hash_api_key, TenantContext
 from app.db import get_session
-from app.models import Estate, Share, Tenant
+from app.models import Agent, AgentPolicy, Estate, Policy, Share, Tenant
 from app.schemas import (
+    AgentCreate,
+    AgentResponse,
     EstateCreate,
     EstateResponse,
     ShareCreate,
@@ -153,3 +155,192 @@ async def list_shares(
         )
         for s in shares
     ]
+
+
+# ============================================================================
+# v0.1: Agent Management
+# ============================================================================
+
+
+@router.post("/agent", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
+async def create_agent(
+    data: AgentCreate,
+    ctx: TenantContext = Depends(get_tenant_context),
+) -> AgentResponse:
+    """
+    Create a new agent for the authenticated tenant.
+
+    Returns the agent with its generated API key (only shown once).
+    """
+    api_key = generate_api_key()
+    agent = Agent(
+        id=uuid4(),
+        tenant_id=ctx.tenant_id,
+        name=data.name,
+        description=data.description,
+        api_key_hash=hash_api_key(api_key),
+    )
+    ctx.session.add(agent)
+    await ctx.session.commit()
+    await ctx.session.refresh(agent)
+
+    return AgentResponse(
+        id=agent.id,
+        tenant_id=agent.tenant_id,
+        name=agent.name,
+        description=agent.description,
+        api_key=api_key,  # Only returned on creation
+        created_at=agent.created_at,
+    )
+
+
+@router.get("/agents", response_model=list[AgentResponse])
+async def list_agents(
+    ctx: TenantContext = Depends(get_tenant_context),
+) -> list[AgentResponse]:
+    """List all agents for the authenticated tenant."""
+    result = await ctx.session.execute(
+        select(Agent).where(Agent.tenant_id == ctx.tenant_id)
+    )
+    agents = result.scalars().all()
+    return [
+        AgentResponse(
+            id=a.id,
+            tenant_id=a.tenant_id,
+            name=a.name,
+            description=a.description,
+            created_at=a.created_at,
+        )
+        for a in agents
+    ]
+
+
+@router.get("/agents/{agent_id}", response_model=AgentResponse)
+async def get_agent(
+    agent_id: UUID,
+    ctx: TenantContext = Depends(get_tenant_context),
+) -> AgentResponse:
+    """Get details of a specific agent."""
+    result = await ctx.session.execute(
+        select(Agent).where(
+            Agent.id == agent_id,
+            Agent.tenant_id == ctx.tenant_id,
+        )
+    )
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent not found",
+        )
+
+    return AgentResponse(
+        id=agent.id,
+        tenant_id=agent.tenant_id,
+        name=agent.name,
+        description=agent.description,
+        created_at=agent.created_at,
+    )
+
+
+@router.delete("/agents/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_agent(
+    agent_id: UUID,
+    ctx: TenantContext = Depends(get_tenant_context),
+) -> None:
+    """Delete an agent."""
+    result = await ctx.session.execute(
+        select(Agent).where(
+            Agent.id == agent_id,
+            Agent.tenant_id == ctx.tenant_id,
+        )
+    )
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent not found",
+        )
+
+    await ctx.session.delete(agent)
+    await ctx.session.commit()
+
+
+@router.post("/agents/{agent_id}/policies/{policy_id}", status_code=status.HTTP_201_CREATED)
+async def assign_policy_to_agent(
+    agent_id: UUID,
+    policy_id: UUID,
+    ctx: TenantContext = Depends(get_tenant_context),
+) -> dict:
+    """Assign a policy to an agent."""
+    # Verify agent exists
+    result = await ctx.session.execute(
+        select(Agent).where(
+            Agent.id == agent_id,
+            Agent.tenant_id == ctx.tenant_id,
+        )
+    )
+    agent = result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent not found",
+        )
+
+    # Verify policy exists
+    result = await ctx.session.execute(
+        select(Policy).where(
+            Policy.id == policy_id,
+            Policy.tenant_id == ctx.tenant_id,
+        )
+    )
+    policy = result.scalar_one_or_none()
+    if not policy:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Policy not found",
+        )
+
+    # Check if already assigned
+    result = await ctx.session.execute(
+        select(AgentPolicy).where(
+            AgentPolicy.agent_id == agent_id,
+            AgentPolicy.policy_id == policy_id,
+        )
+    )
+    existing = result.scalar_one_or_none()
+    if existing:
+        return {"status": "already_assigned"}
+
+    # Create assignment
+    agent_policy = AgentPolicy(
+        id=uuid4(),
+        agent_id=agent_id,
+        policy_id=policy_id,
+    )
+    ctx.session.add(agent_policy)
+    await ctx.session.commit()
+
+    return {"status": "assigned"}
+
+
+@router.delete("/agents/{agent_id}/policies/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_policy_from_agent(
+    agent_id: UUID,
+    policy_id: UUID,
+    ctx: TenantContext = Depends(get_tenant_context),
+) -> None:
+    """Remove a policy from an agent."""
+    result = await ctx.session.execute(
+        select(AgentPolicy).where(
+            AgentPolicy.agent_id == agent_id,
+            AgentPolicy.policy_id == policy_id,
+        )
+    )
+    assignment = result.scalar_one_or_none()
+
+    if assignment:
+        await ctx.session.delete(assignment)
+        await ctx.session.commit()

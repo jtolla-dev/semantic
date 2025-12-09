@@ -5,6 +5,7 @@ import sys
 
 from app.workers.enrichment import EnrichmentWorker
 from app.workers.extraction import ExtractionWorker
+from app.workers.semantics import SemanticExtractionWorker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,12 +18,14 @@ async def run_workers():
     """Run all workers concurrently."""
     extraction_worker = ExtractionWorker()
     enrichment_worker = EnrichmentWorker()
+    semantics_worker = SemanticExtractionWorker()
 
     # Handle shutdown signals
     def handle_shutdown(sig, frame):
         logger.info("Received shutdown signal")
         extraction_worker.stop()
         enrichment_worker.stop()
+        semantics_worker.stop()
 
     signal.signal(signal.SIGINT, handle_shutdown)
     signal.signal(signal.SIGTERM, handle_shutdown)
@@ -31,6 +34,7 @@ async def run_workers():
     await asyncio.gather(
         extraction_worker.run(),
         enrichment_worker.run(),
+        semantics_worker.run(),
     )
 
 
