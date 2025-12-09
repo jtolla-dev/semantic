@@ -1,0 +1,298 @@
+# Strata
+
+**AI data plane and agent layer for enterprise file systems.**
+
+Strata is a storage-native semantic layer that sits beside existing file infrastructure (NFS/SMB shares, NAS, object stores) and makes file estates legible, queryable, and governable for AI agents.
+
+## What It Does
+
+- **Ingests file metadata and content** from SMB shares via a lightweight connector agent
+- **Extracts and chunks text** from documents (PDF, DOCX, PPTX, TXT)
+- **Detects sensitive content** using regex-based PII/secret scanners (emails, SSNs, credit cards, API keys)
+- **Computes exposure scores** based on ACL breadth and sensitivity findings
+- **Provides APIs** for querying sensitive content with ACL-aware filtering
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           Customer Environment                               │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                   │
+│  │  SMB Share   │    │  SMB Share   │    │  SMB Share   │                   │
+│  │   (mounted)  │    │   (mounted)  │    │   (mounted)  │                   │
+│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘                   │
+│         │                   │                   │                            │
+│         └───────────────────┼───────────────────┘                            │
+│                             │                                                │
+│                    ┌────────▼────────┐                                       │
+│                    │  Strata Agent   │  Scans files, computes hashes,        │
+│                    │    (Python)     │  collects ACLs, sends events          │
+│                    └────────┬────────┘                                       │
+└─────────────────────────────┼───────────────────────────────────────────────┘
+                              │ HTTPS
+                              │ POST /v0/ingest/events
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           Strata Control Plane                               │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                         FastAPI Server                                │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │   │
+│  │  │   Ingest    │  │   Query     │  │  Dashboard  │  │   Admin     │  │   │
+│  │  │     API     │  │    API      │  │     API     │  │    API      │  │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                              │                                               │
+│                              ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                        Job Queue (Postgres)                           │   │
+│  │                   SELECT ... FOR UPDATE SKIP LOCKED                   │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                              │                                               │
+│           ┌──────────────────┼──────────────────┐                           │
+│           ▼                                     ▼                            │
+│  ┌─────────────────┐                   ┌─────────────────┐                  │
+│  │   Extraction    │                   │   Enrichment    │                  │
+│  │     Worker      │                   │     Worker      │                  │
+│  │                 │                   │                 │                  │
+│  │ • Read files    │                   │ • Embeddings    │                  │
+│  │ • Extract text  │ ───────────────▶  │ • PII detection │                  │
+│  │ • Chunk content │   ENRICH_CHUNKS   │ • Exposure calc │                  │
+│  └─────────────────┘                   └─────────────────┘                  │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                     PostgreSQL + pgvector                             │   │
+│  │                                                                       │   │
+│  │  tenants │ estates │ shares │ files │ principals │ ACLs │ documents  │   │
+│  │  chunks │ embeddings │ sensitivity_findings │ document_exposure │ jobs│   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Project Manifest
+
+```
+strata/
+├── README.md                    # This file
+├── CLAUDE.md                    # Claude Code guidance
+├── docker-compose.yml           # Docker services (db, api, worker)
+├── v0.md                        # Engineering design document
+│
+├── backend/                     # Control plane (FastAPI)
+│   ├── pyproject.toml           # Python dependencies
+│   ├── Dockerfile               # Container image
+│   ├── alembic.ini              # Migration config
+│   ├── alembic/
+│   │   ├── env.py               # Alembic environment
+│   │   └── versions/
+│   │       └── 001_initial_schema.py
+│   └── app/
+│       ├── main.py              # FastAPI entrypoint
+│       ├── config.py            # Settings (pydantic-settings)
+│       ├── db.py                # Database session management
+│       ├── models.py            # SQLAlchemy ORM models
+│       ├── schemas.py           # Pydantic request/response schemas
+│       ├── auth.py              # API key authentication
+│       ├── api/
+│       │   ├── admin.py         # Tenant/estate/share management
+│       │   ├── ingest.py        # POST /v0/ingest/events
+│       │   └── query.py         # Sensitivity/search/dashboard APIs
+│       ├── services/
+│       │   ├── extraction.py    # PDF/DOCX/PPTX text extraction
+│       │   ├── sensitivity.py   # PII/secret regex detection
+│       │   └── exposure.py      # Exposure score calculation
+│       └── workers/
+│           ├── base.py          # Base worker with job claiming
+│           ├── extraction.py    # EXTRACT_CONTENT job processor
+│           ├── enrichment.py    # ENRICH_CHUNKS job processor
+│           └── runner.py        # Worker process entrypoint
+│
+├── agent/                       # SMB connector agent
+│   ├── pyproject.toml           # Python dependencies
+│   ├── config.example.yaml      # Example configuration
+│   └── agent/
+│       ├── config.py            # YAML config loading
+│       ├── scanner.py           # File system scanner
+│       ├── client.py            # Strata API client
+│       └── main.py              # CLI entrypoint
+│
+└── docs/                        # Design documents
+    ├── CONCEPT.md               # Architecture concepts
+    ├── USE_CASES.md             # Product use cases
+    ├── POSITIONING.md           # Market positioning
+    └── FOUNDER_THESIS.md        # Founder thesis
+```
+
+## Quick Start
+
+### 1. Start Services
+
+```bash
+# Start Postgres, API, and worker
+docker-compose up -d
+
+# Run database migrations
+docker-compose exec api alembic upgrade head
+```
+
+### 2. Create a Tenant
+
+```bash
+curl -X POST http://localhost:8000/v0/admin/tenant \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Acme Corp"}'
+
+# Response includes API key:
+# {"id": "...", "name": "Acme Corp", "api_key": "strata_xxxxx..."}
+```
+
+### 3. Create an Estate and Share
+
+```bash
+export API_KEY="strata_xxxxx..."
+
+# Create estate
+curl -X POST http://localhost:8000/v0/admin/estate \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "HQ File Server"}'
+
+# Create share (use estate_id from response)
+curl -X POST http://localhost:8000/v0/admin/share \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "estate_id": "...",
+    "name": "HRShare",
+    "share_type": "SMB",
+    "root_path": "/mnt/hrshare"
+  }'
+```
+
+### 4. Configure and Run Agent
+
+```bash
+cd agent
+cp config.example.yaml config.yaml
+# Edit config.yaml with your API key and share mount points
+
+pip install -e .
+strata-agent --config config.yaml --once
+```
+
+### 5. Query Sensitive Content
+
+```bash
+curl -X POST http://localhost:8000/v0/sensitivity/find \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sensitivity_types": ["PERSONAL_DATA", "FINANCIAL_DATA"],
+    "exposure_levels": ["HIGH"],
+    "page": 1,
+    "page_size": 50
+  }'
+```
+
+## API Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v0/admin/tenant` | POST | Create tenant (returns API key) |
+| `/v0/admin/estate` | POST | Create estate |
+| `/v0/admin/estates` | GET | List estates |
+| `/v0/admin/share` | POST | Create share |
+| `/v0/admin/shares` | GET | List shares |
+| `/v0/ingest/events` | POST | Ingest file events from agent |
+| `/v0/sensitivity/find` | POST | Query sensitive documents |
+| `/v0/search/chunks` | POST | Text search over chunks |
+| `/v0/dashboard/metrics` | GET | Dashboard statistics |
+| `/v0/documents/{id}` | GET | Document details with findings |
+| `/health` | GET | Health check |
+
+## Sensitivity Detection
+
+The enrichment worker detects the following sensitive content types:
+
+| Type | Patterns | Level |
+|------|----------|-------|
+| **PERSONAL_DATA** | Email addresses, phone numbers, SSN-like patterns | MEDIUM-HIGH |
+| **FINANCIAL_DATA** | Credit card numbers (with Luhn validation) | HIGH |
+| **SECRETS** | AWS keys, API keys, bearer tokens, private keys, GitHub/Slack tokens | HIGH |
+
+## Exposure Scoring
+
+Exposure is calculated based on:
+
+1. **Principal breadth** (0-10 principals = 20pts, 11-100 = 50pts, >100 = 80pts)
+2. **Broad groups** (+20pts if "Domain Users", "Everyone", etc. have access)
+3. **Sensitivity score** (SECRETS/FINANCIAL = 80pts, PERSONAL = 60pts)
+
+Final score: `min(100, sensitivity_score + principal_breadth_score)`
+
+Exposure levels: LOW (0-39), MEDIUM (40-69), HIGH (70-100)
+
+## Development
+
+### Local Setup
+
+```bash
+# Backend
+cd backend
+pip install -e ".[dev]"
+cp .env.example .env
+
+# Start local Postgres
+docker run -d --name strata-db -p 5432:5432 \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=strata \
+  pgvector/pgvector:pg16
+
+# Migrations
+alembic upgrade head
+
+# Run API
+uvicorn app.main:app --reload
+
+# Run workers (separate terminal)
+python -m app.workers.runner
+```
+
+### Running Tests
+
+```bash
+cd backend
+pytest
+pytest -v tests/test_sensitivity.py  # Single file
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql+asyncpg://...` | Postgres connection string |
+| `ENABLE_EMBEDDINGS` | `false` | Enable OpenAI embeddings |
+| `OPENAI_API_KEY` | - | OpenAI API key (if embeddings enabled) |
+| `CHUNK_SIZE` | `1000` | Characters per chunk |
+| `CHUNK_OVERLAP` | `200` | Overlap between chunks |
+
+## v0 Scope
+
+This is a design-partner build with intentional limitations:
+
+**In Scope:**
+- Single SMB connector type
+- Single Postgres instance
+- PDF, DOCX, PPTX, TXT extraction
+- Regex-based sensitivity detection
+- Static API key auth
+
+**Out of Scope (v0):**
+- SharePoint/OneDrive/Box connectors
+- Write operations to file systems
+- OCR for scanned documents
+- Remediation APIs
+- Production-grade auth (OAuth, SAML)
+
+## License
+
+Proprietary - All rights reserved.

@@ -1,0 +1,42 @@
+# Strata SMB Connector Agent Configuration
+# Copy this file to config.yaml and customize for your environment
+
+# Unique identifier for this agent instance
+agent_id: "strata-agent-1"
+
+# API key for authentication (can also be set via STRATA_API_KEY env var)
+# tenant_api_key: "strata_xxxxxxxxxxxx"
+
+# Strata API base URL (can also be set via STRATA_API_BASE_URL env var)
+api_base_url: "http://localhost:8000"
+
+# Interval between scans in seconds
+scan_interval_seconds: 600
+
+# Number of events to send per batch
+batch_size: 100
+
+# SMB shares to scan
+shares:
+  - name: "HRShare"
+    smb_uri: "\\\\server\\hr"
+    mount_point: "/mnt/hrshare"
+    include_paths:
+      - "/"
+    exclude_patterns:
+      - "*.tmp"
+      - "~*"
+      - ".DS_Store"
+      - "Thumbs.db"
+    max_file_size_bytes: 104857600  # 100MB
+
+  # Add more shares as needed:
+  # - name: "FinanceShare"
+  #   smb_uri: "\\\\server\\finance"
+  #   mount_point: "/mnt/finance"
+  #   include_paths:
+  #     - "/reports"
+  #     - "/invoices"
+  #   exclude_patterns:
+  #     - "*.tmp"
+  #   max_file_size_bytes: 52428800  # 50MB

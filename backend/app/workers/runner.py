@@ -1,0 +1,44 @@
+import asyncio
+import logging
+import signal
+import sys
+
+from app.workers.enrichment import EnrichmentWorker
+from app.workers.extraction import ExtractionWorker
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+async def run_workers():
+    """Run all workers concurrently."""
+    extraction_worker = ExtractionWorker()
+    enrichment_worker = EnrichmentWorker()
+
+    # Handle shutdown signals
+    def handle_shutdown(sig, frame):
+        logger.info("Received shutdown signal")
+        extraction_worker.stop()
+        enrichment_worker.stop()
+
+    signal.signal(signal.SIGINT, handle_shutdown)
+    signal.signal(signal.SIGTERM, handle_shutdown)
+
+    # Run workers concurrently
+    await asyncio.gather(
+        extraction_worker.run(),
+        enrichment_worker.run(),
+    )
+
+
+def main():
+    """Entry point for the worker process."""
+    logger.info("Starting Strata workers")
+    asyncio.run(run_workers())
+
+
+if __name__ == "__main__":
+    main()
