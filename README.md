@@ -92,7 +92,7 @@ strata/
 │   │   ├── env.py               # Alembic environment
 │   │   └── versions/
 │   │       ├── 001_initial_schema.py
-│   │       └── 002_v01_semantic_features.py
+│   │       └── 002_semantic_features.py
 │   └── app/
 │       ├── main.py              # FastAPI entrypoint
 │       ├── config.py            # Settings (pydantic-settings)
@@ -237,7 +237,7 @@ curl -X POST http://localhost:8000/v0/sensitivity/find \
 | `/v0/documents/{id}` | GET | Document details with findings |
 | `/health` | GET | Health check |
 
-### v0.1 Semantic APIs
+### Semantic & Observability APIs
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -345,7 +345,7 @@ content:
 
 View types: **raw** (full content), **redacted** (PII/secrets masked), **summary** (chunk summaries only)
 
-## v0.1 Scope
+## v0 Scope
 
 **In Scope:**
 

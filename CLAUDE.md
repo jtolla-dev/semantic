@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Strata** is a headless semantic and safety data plane for enterprise file systems. The goal is to build a storage-native semantic layer over enterprise file estates (NFS/SMB/object stores) that enables AI agents to safely understand, query, and govern unstructured file data.
 
-Key capabilities (v0.1):
+Key capabilities:
 - Document type classification (CONTRACT, POLICY, RFC, OTHER)
 - Structured field extraction from documents
 - Type-aware chunking that preserves semantic boundaries
@@ -72,7 +72,7 @@ pytest
 pytest tests/test_extraction.py -v  # Run single test file
 ```
 
-## Architecture (v0.1)
+## Architecture
 
 The system consists of five main components:
 
@@ -145,9 +145,7 @@ The system consists of five main components:
 
 ## Data Model
 
-**Core entities:** `tenant`, `estate`, `share`, `file`, `principal`, `group_membership`, `file_acl_entry`, `file_effective_access`, `document`, `chunk`, `chunk_embedding`, `sensitivity_finding`, `document_exposure`, `job`, `file_event`
-
-**v0.1 entities:** `agent`, `policy`, `agent_policy`, `interaction`, `interaction_chunk`, `semantic_diff_result`
+**Core entities:** `tenant`, `estate`, `share`, `file`, `principal`, `group_membership`, `file_acl_entry`, `file_effective_access`, `document`, `chunk`, `chunk_embedding`, `sensitivity_finding`, `document_exposure`, `job`, `file_event`, `agent`, `policy`, `agent_policy`, `interaction`, `interaction_chunk`, `semantic_diff_result`
 
 **Document fields:** `doc_type` (CONTRACT/POLICY/RFC/OTHER), `structured_fields` (JSONB), `version_number`, `previous_version_id`
 

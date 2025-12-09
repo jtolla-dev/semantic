@@ -1,7 +1,6 @@
 # Strata Architecture
 
-**Version:** 1.0
-**Status:** Current implementation
+**Status:** Current implementation (v0)
 
 This document describes the architecture of Strata, a headless semantic and safety data plane for enterprise file systems.
 
