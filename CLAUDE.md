@@ -31,15 +31,16 @@ docker-compose logs -f api worker
 ### Agent Setup
 ```bash
 cd agent
-uv pip install -e .
 cp config.example.yaml config.yaml
 # Edit config.yaml with your shares and API key
 
+uv sync
+
 # Run single scan
-strata-agent --config config.yaml --once
+uv run strata-agent --config config.yaml --once
 
 # Run continuously
-strata-agent --config config.yaml
+uv run strata-agent --config config.yaml
 ```
 
 ### Testing

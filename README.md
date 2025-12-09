@@ -190,8 +190,8 @@ cd agent
 cp config.example.yaml config.yaml
 # Edit config.yaml with your API key and share mount points
 
-uv pip install -e .
-strata-agent --config config.yaml --once
+uv sync
+uv run strata-agent --config config.yaml --once
 ```
 
 ### 5. Query Sensitive Content
