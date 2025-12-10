@@ -1,125 +1,160 @@
-# Founder Thesis: AI Data Plane for Enterprise File Estates
+# Founder Thesis – Strata
 
-**Working idea:** Build the **AI data plane and agent layer for enterprise file systems**—turning legacy shared drives (NFS/SMB/object-backed) into governed, agent-accessible knowledge infrastructure.
+**Working Name:** Strata
+**Tagline:** The AI data plane for enterprise file estates
 
 ---
 
 ## 1. Problem
 
-Every large organization has a sprawling, business-critical file estate:
+Enterprises are racing to deploy AI agents and copilots over their own data. But their largest, most valuable corpus remains effectively *off limits*:
 
-* Petabytes of content across NAS, file gateways, cloud buckets, and “modern” collaboration tools.
-* Decades of contracts, specs, RFIs, financials, HR docs, and scans living on shared drives.
-* Increasing regulatory and security pressure (PII/PHI, data residency, retention, legal hold).
+* Decades of content in **NFS/SMB shares and NAS**: contracts, policies, HR files, financials, engineering docs, RFIs, scans.
+* Complex **ACLs and group memberships** that no one fully understands.
+* Existing **DSPM / DLP tools** that surface risks, but do **not** provide a safe, programmable way for LLMs and agents to work with this data.
 
-Today:
+Today, AI platform teams face a hard tradeoff:
 
-* No one actually knows **what’s in** those file shares (sensitivity, ownership, contractual risk).
-* Security/compliance teams run periodic one-off scans or manual audits—slow, noisy, and quickly stale.
-* AI initiatives (Copilot, Vertex, “internal GPTs”) cannot safely or effectively consume this data because:
+* Either they **ignore file estates** and ship neutered AI experiences, or
+* They **“eyeball” a subset into a vector store**, bypassing ACLs and creating new, un-audited risk.
 
-  * There’s no semantic layer (structure, entities, relationships) over the files.
-  * There’s no robust, audited interface for agents to act on file systems while respecting ACLs.
+Security and compliance teams, rightly, say “no” or drag their feet. As a result:
 
-The result: file estates are simultaneously the **most valuable** and **least governable** data in the company.
+> AI initiatives stall not because models are bad, but because there is no **AI-native data plane** between file storage and agents.
 
 ---
 
-## 2. Why existing tools fall short
+## 2. Why now
 
-Current offerings attack adjacent problems, but not this one head-on:
+Three secular shifts collide here:
 
-* **Content platforms (Box, SharePoint, etc.)**
-  Add strong AI features—but only for content that lives inside their silo. Enterprise file estates span many systems that will never be fully migrated into a single SaaS.
+1. **Internal GPT / Copilot platforms**
 
-* **Enterprise search / Work AI platforms**
-  Provide semantic search and Q&A over multiple SaaS tools, but sit far from storage. They don’t understand file-system primitives (shares, snapshots, caching tiers, DR) and can’t perform controlled, auditable actions on the file layer.
+   * Enterprises are standardizing on “AI hubs” (ChatGPT Enterprise, M365 Copilot, internal orchestration).
+   * These teams need reliable, policy-aware tools to add high-value data sources—file systems are top of the list.
 
-* **Cloud AI / RAG infra (Vertex, Copilot, RAG stacks)**
-  Offer great retrieval and agent tooling, but expect a pre-digested knowledge layer. They don’t solve ingestion, enrichment, permissions, and governance for messy file estates.
+2. **Unstructured data security is board-level**
 
-Nobody is treating the **file system itself** as a first-class substrate for AI and agents.
+   * Ransomware, insider threats, and privacy regulations have made “What’s in our file shares, who can see it?” a board question.
+   * DSPM tools map the risk; they do *not* solve safe AI runtime access.
 
----
+3. **AI is moving from “Q&A” to “agents”**
 
-## 3. Solution: an AI data plane for files, not another search bar
+   * Agents need structured tools: `search`, `read`, `summarize`, `propose_remediation` over file data.
+   * Those tools must be **ACL-accurate, policy-bound, and fully auditable**.
 
-One-line description:
-
-> We provide a **storage-native, AI-ready semantic layer and tool API** over enterprise file estates, so organizations and their agents can safely understand, query, and govern their files at scale.
-
-Key capabilities:
-
-1. **Storage-native semantic index**
-
-   * Connect to NFS/SMB/object-backed shares and file platforms.
-   * Ingest file events (create/modify/delete/ACL change, snapshots) into a **live semantic index**.
-   * Parse, chunk, embed, and classify files (type, sensitivity, entities, obligations) with strong ACL awareness.
-
-2. **Agent-first tools over files**
-   Expose a strict, audited tool API for LLMs/agents, e.g.:
-
-   * `search_chunks()` – permissions-aware hybrid search over enriched chunks.
-   * `find_sensitive_content()` – locate PII/PHI or contractual risk in specific scopes.
-   * `summarize_folder()` / `summarize_matter()` – generate scoped, citation-backed summaries.
-   * `propose_remediation()` / `apply_remediation()` – suggest and (optionally) execute actions: tighten ACLs, move files, flag owners.
-
-   This makes file estates **safe to wire into** Copilot, Vertex agents, internal GPTs, and custom workflows.
-
-3. **Continuous compliance & risk layer**
-
-   * Always-on classification of content and access patterns.
-   * Dashboards and alerts for overexposed sensitive data, stale/rogue shares, and policy violations.
-   * Human-in-the-loop workflows for review/approval of agent-proposed changes.
-
-We are **not** building a new storage system or “yet another search UI.” We are the **governed interface between AI and your existing file estate.**
+The missing layer is a **storage-native, AI-facing data plane** for enterprise file estates.
 
 ---
 
-## 4. Why now
+## 3. Solution: Strata
 
-* **AI agents are moving from “chat toys” to operational systems.**
-  Enterprises want agents that *do* things—auto-triage tickets, draft responses, remediate issues—not just answer questions. For that, agents need a trusted way to read and act on files.
+Strata is a **headless semantic and safety data plane** for enterprise file systems. It sits next to existing storage and identity systems and exposes an AI-native interface to file estates.
 
-* **File data is still the blind spot in most AI strategies.**
-  Organizations are connecting SaaS apps to Copilot/Vertex/etc., but their largest and riskiest data set—file shares—is either excluded or naively indexed.
+**What Strata does**
 
-* **Regulation and security pressure are rising.**
-  Data protection, breach disclosure, and sector-specific regulations are tightening. Boards and CISOs are looking for ways to continuously understand and reduce unstructured-data risk.
+1. **Connects to file estates**
 
-* **Infra and models are finally ready.**
-  Mature file platforms, cheap object storage, robust text extraction, and high-quality embeddings/LLMs make a storage-native semantic layer practically achievable.
+   * Agents running near SMB/NFS/NAS scan configured shares.
+   * We ingest file metadata, content, and ACLs into a tenant-scoped index.
 
-This is the **inflection point** where enterprises will decide how AI interacts with their legacy file estates. There is space for a new infrastructure company to own that layer.
+2. **Builds a semantic + risk model**
+
+   * Classifies documents (CONTRACT, POLICY, RFC, OTHER).
+   * Performs type-aware chunking (contracts by clause, RFCs by section).
+   * Detects sensitive content (PII, financials, secrets) via hybrid rules + ML/LLM.
+   * Computes exposure scores (0–100) combining sensitivity and effective access breadth.
+
+3. **Enforces policy at query time**
+
+   * Integrates with AD/IdP to understand users, groups, and roles.
+   * Every query is filtered by **live ACLs** and **org policies**:
+
+     * Some agents see raw content,
+     * Some see redacted text,
+     * Some see summaries only.
+
+4. **Provides AI-native tools and observability**
+
+   * Headless APIs and tools for AI platforms:
+
+     * `search_chunks`, `find_sensitive_content`, `summarize_scope`, `propose_remediation`.
+   * Full interaction observability:
+
+     * What each agent retrieved, under which principal, from which documents, and why.
+
+Strata does **not** replace existing storage or DSPM consoles. It becomes the **runtime data plane** that AI platforms and security teams share.
 
 ---
 
-## 5. Why me (founder–problem fit)
+## 4. Who it’s for
 
-* I’ve spent nearly a decade building and leading engineering teams on **cloud-backed enterprise file systems and SaaS management planes** serving large, global customers.
-* I’ve seen first-hand:
+**Primary buyer / user:**
 
-  * How complex multi-site, hybrid file estates really are (performance, caching, DR, migrations).
-  * How security, compliance, and AI teams struggle to reason about “what’s in the files” and expose it safely to new tools.
-* I’ve also led the adoption of **AI tooling and workflows** inside a production engineering organization, giving me a pragmatic view of how LLMs and agents succeed—or fail—in real environments.
+* **Internal AI Platform / ML Infra teams**
 
-That combination—deep exposure to file-system realities plus hands-on AI productization experience—puts me in a strong position to design a solution that is both **infrastructure-correct** and **usable by AI platform teams.**
+  * Own internal GPT/Copilot deployments and AI orchestration.
+  * Need a clean, embeddable way to let agents work over file shares without bypassing ACLs.
+
+**Critical co-sponsor:**
+
+* **Security, Risk, and Compliance**
+
+  * Define sensitivity policies and acceptable use.
+  * Consume exposure maps and audit trails.
+  * Use Strata as the enforcement and evidence layer for AI over file estates.
+
+In many large accounts, Strata will:
+
+* Integrate with existing **DSPM / data security platforms** (for labels, findings),
+* While owning the **agent-facing, policy-aware retrieval and runtime control**.
 
 ---
 
-## 6. Phase 1: Beachhead
+## 5. Product v0 / v1 (what this pre-seed funds)
 
-Initial focus:
+**v0 – Read-only AI data plane for scoped shares (12–18 months)**
 
-> Mid- to large-enterprise organizations with multi-petabyte shared drives (on-prem or hybrid) and active security/compliance programs, who are rolling out Copilot/Vertex/LLM initiatives but cannot safely include their file estates.
+* SMB/NFS connector for 1–3 high-value shares per design partner.
+* Ingestion of metadata, content, and ACLs into an estate model.
+* Document classification, basic type-aware chunking.
+* Sensitivity detection (hybrid rules + ML/LLM) and exposure scoring.
+* ACL-accurate search and sensitivity discovery APIs.
+* Initial policy-driven redaction and RAG with citations.
+* Per-tenant dashboard for security/AI teams: “What’s in these shares, where is risk, and how is AI using it?”
 
-Phase 1 product:
+**v1 – Agent-first runtime layer**
 
-* Connect to a limited subset of high-value shares.
-* Deliver:
+* Structured field extraction for contracts and policies.
+* Document versioning and semantic diffs for change tracking.
+* Rich policy engine for agent-specific views (per agent/persona).
+* Full interaction observability and audit exports (for SOC, compliance, legal).
+* Deeper integrations:
 
-  * Sensitive-data discovery + exposure mapping.
-  * Remediation recommendations for over-broad access.
-  * A small, well-scoped set of agent tools that security/compliance/AI teams can integrate into existing SIEM / Copilot / internal GPT workflows.
+  * AI orchestrators (MCP, LangChain, internal platforms).
+  * Existing DSPM/UEBA tools, reusing their labels and insights.
 
-If this works, it becomes the foundation for a broader **file-native AI platform**: powering operational agents, domain-specific copilots, and richer knowledge graphs over the entire file estate.
+The pre-seed round is explicitly to:
+
+* Build v0,
+* Run 3–5 design-partner deployments on real shares, and
+* Prove that Strata is both **technically sound** and **economically compelling** as the AI data plane for file estates.
+
+---
+
+## 6. Founder / unfair advantage
+
+I’ve spent the last ~10 years as an engineering leader at **Nasuni**, a cloud-backed enterprise file system:
+
+* Led teams building the **management plane** for thousands of edge appliances and hundreds of petabytes of unstructured data across AWS, Azure, and GCP.
+* Deep experience with:
+
+  * SMB/NFS semantics, snapshots, ACLs, and multi-tenant management.
+  * Building secure, cloud-native control planes that enterprises trust.
+  * Early adoption and integration of AI inside a storage company.
+
+This gives Strata a rare combination at day zero:
+
+* Deep understanding of **enterprise file estates and ACLs**, and
+* Hands-on experience building **management planes at scale**, and
+* A clear, founder-led conviction about what AI platform and security teams will need over the next 5–10 years.
