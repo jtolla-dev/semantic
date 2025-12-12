@@ -1,6 +1,6 @@
-// Homepage sections
-export { HeroSection } from './hero-section'
-export { EmailNativeSection } from './email-native-section'
-export { ComparisonSection } from './comparison-section'
-export { FullPricingSection } from './full-pricing-section'
-export { FinalCTASection } from './final-cta-section'
+export { HeroSection } from './HeroSection'
+export { ArchitectureSection } from './ArchitectureSection'
+export { BenefitsSection } from './BenefitsSection'
+export { WhyStrataSection } from './WhyStrataSection'
+export { TeamsSection } from './TeamsSection'
+export { CTASection } from './CTASection'
