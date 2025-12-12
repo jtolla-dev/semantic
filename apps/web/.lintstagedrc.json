@@ -1,0 +1,4 @@
+{
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write", "bash -c 'tsc --noEmit'", "bash -c 'knip'"],
+  "*.{json,md,mdx,css,yml,yaml}": ["prettier --write"]
+}

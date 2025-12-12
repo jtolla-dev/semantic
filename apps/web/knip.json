@@ -1,0 +1,15 @@
+{
+  "entry": ["src/app/**/*.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx,js,jsx}"],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/*.d.ts",
+    "src/app/**/*.css",
+    "src/lib/**/*.ts",
+    "src/hooks/**/*.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": ["tailwindcss", "lint-staged", "@tailwindcss/typography"],
+  "ignoreBinaries": []
+}

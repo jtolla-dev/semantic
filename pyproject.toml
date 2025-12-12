@@ -1,10 +1,10 @@
 # Root pyproject.toml for shared tooling configuration
-# Individual packages (strata/, strata_agent/) have their own pyproject.toml for dependencies
+# Individual packages (apps/api/, apps/agent/) have their own pyproject.toml for dependencies
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["strata", "strata_agent"]
+src = ["apps/api", "apps/agent"]
 
 [tool.ruff.lint]
 select = [
@@ -57,7 +57,7 @@ known-first-party = ["app", "strata_agent"]
 [tool.pyright]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
-include = ["strata", "strata_agent"]
+include = ["apps/api", "apps/agent"]
 exclude = ["**/alembic/**", "**/tests/**"]
 reportMissingImports = "warning"
 reportMissingTypeStubs = false
@@ -68,5 +68,5 @@ skips = ["B101", "B110"]  # Skip assert warnings and try-except-pass (used for r
 
 [tool.vulture]
 min_confidence = 90
-paths = ["strata/", "strata_agent/"]
+paths = ["apps/api/", "apps/agent/"]
 exclude = ["alembic/", "tests/"]
