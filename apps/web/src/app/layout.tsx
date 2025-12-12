@@ -21,9 +21,9 @@ const appUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: 'Strata – AI-Native Data Layer for NFS/SMB',
+  title: 'Topos – AI-Native Data Layer for NFS/SMB',
   description:
-    'Unlock your file shares for safe, auditable, more capable AI. Strata is the semantic and safety data plane for enterprise file systems.',
+    'Unlock your file shares for safe, auditable, more capable AI. Topos is the semantic and safety data plane for enterprise file systems.',
   keywords: [
     'AI data layer',
     'NFS SMB AI',
@@ -43,17 +43,17 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: 'Strata – AI-Native Data Layer for NFS/SMB',
+    title: 'Topos – AI-Native Data Layer for NFS/SMB',
     description:
-      'Unlock your file shares for safe, auditable, more capable AI. Strata is the semantic and safety data plane for enterprise file systems.',
-    url: 'https://strataplane.dev',
-    siteName: 'Strata',
+      'Unlock your file shares for safe, auditable, more capable AI. Topos is the semantic and safety data plane for enterprise file systems.',
+    url: 'https://toposhq.com',
+    siteName: 'Topos',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Strata AI Data Layer',
+        alt: 'Topos AI Data Layer',
       },
     ],
     locale: 'en_US',
@@ -61,12 +61,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Strata – AI-Native Data Layer for NFS/SMB',
+    title: 'Topos – AI-Native Data Layer for NFS/SMB',
     description:
-      'Unlock your file shares for safe, auditable, more capable AI. Strata is the semantic and safety data plane for enterprise file systems.',
+      'Unlock your file shares for safe, auditable, more capable AI. Topos is the semantic and safety data plane for enterprise file systems.',
     images: ['/og-image.png'],
-    creator: '@strataplane',
-    site: '@strataplane',
+    creator: '@toposhq',
+    site: '@toposhq',
   },
   robots: {
     index: true,

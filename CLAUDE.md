@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Strata** is a headless semantic and safety data plane for enterprise file systems. The goal is to build a storage-native semantic layer over enterprise file estates (NFS/SMB/object stores) that enables AI agents to safely understand, query, and govern unstructured file data.
+**Topos** is a headless semantic and safety data plane for enterprise file systems. The goal is to build a storage-native semantic layer over enterprise file estates (NFS/SMB/object stores) that enables AI agents to safely understand, query, and govern unstructured file data.
 
 Key capabilities:
 - Document type classification (CONTRACT, POLICY, RFC, OTHER)
@@ -35,13 +35,13 @@ docker-compose logs -f api worker  # View logs
 
 ### Agent Setup (standalone)
 ```bash
-cd strata_agent
+cd topos_agent
 cp config.example.yaml config.yaml
 # Edit config.yaml with your shares and API key
 
 uv sync
-uv run strata-agent --config config.yaml --once  # Single scan
-uv run strata-agent --config config.yaml         # Continuous
+uv run topos-agent --config config.yaml --once  # Single scan
+uv run topos-agent --config config.yaml         # Continuous
 ```
 
 ### Testing
@@ -61,42 +61,42 @@ make typecheck  # Run mypy
 
 The system consists of five main components:
 
-1. **On-Prem SMB Connector Agent** (`strata_agent/`) - Scans SMB shares, sends file events to API
-2. **Strata Control Plane** (`strata/app/`) - FastAPI server for ingestion, query, and RAG APIs
-3. **Worker Services** (`strata/app/workers/`) - Process extraction, enrichment, and semantic extraction jobs
+1. **On-Prem SMB Connector Agent** (`topos_agent/`) - Scans SMB shares, sends file events to API
+2. **Topos Control Plane** (`apps/api/app/`) - FastAPI server for ingestion, query, and RAG APIs
+3. **Worker Services** (`apps/api/app/workers/`) - Process extraction, enrichment, and semantic extraction jobs
 4. **Data Stores** - Postgres with pgvector extension
 5. **Web UI** (not yet implemented) - Dashboard for sensitive content discovery
 
 ## Key Files
 
 **API Layer:**
-- `strata/app/main.py` - FastAPI application entry point
-- `strata/app/models.py` - SQLAlchemy ORM models (Document, Chunk, Agent, Policy, Interaction, etc.)
-- `strata/app/api/admin.py` - Tenant/estate/share/agent management
-- `strata/app/api/ingest.py` - Ingestion endpoint for file events
-- `strata/app/api/query.py` - Query, RAG, and observability APIs
+- `apps/api/app/main.py` - FastAPI application entry point
+- `apps/api/app/models.py` - SQLAlchemy ORM models (Document, Chunk, Agent, Policy, Interaction, etc.)
+- `apps/api/app/api/admin.py` - Tenant/estate/share/agent management
+- `apps/api/app/api/ingest.py` - Ingestion endpoint for file events
+- `apps/api/app/api/query.py` - Query, RAG, and observability APIs
 
 **Services:**
-- `strata/app/services/extraction.py` - Text extraction + type-aware chunking
-- `strata/app/services/classification.py` - Document type classification (CONTRACT/POLICY/RFC/OTHER)
-- `strata/app/services/semantic_extraction.py` - Structured field extraction via LLM
-- `strata/app/services/semantic_diff.py` - Compute diff between document versions
-- `strata/app/services/policy_engine.py` - Agent policy evaluation and LLM-safe views
-- `strata/app/services/observability.py` - RAG interaction tracking
-- `strata/app/services/sensitivity.py` - Regex-based PII/secret detection
-- `strata/app/services/exposure.py` - Exposure score calculation
+- `apps/api/app/services/extraction.py` - Text extraction + type-aware chunking
+- `apps/api/app/services/classification.py` - Document type classification (CONTRACT/POLICY/RFC/OTHER)
+- `apps/api/app/services/semantic_extraction.py` - Structured field extraction via LLM
+- `apps/api/app/services/semantic_diff.py` - Compute diff between document versions
+- `apps/api/app/services/policy_engine.py` - Agent policy evaluation and LLM-safe views
+- `apps/api/app/services/observability.py` - RAG interaction tracking
+- `apps/api/app/services/sensitivity.py` - Regex-based PII/secret detection
+- `apps/api/app/services/exposure.py` - Exposure score calculation
 
 **Workers:**
-- `strata/app/workers/extraction.py` - EXTRACT_CONTENT job processor (includes classification)
-- `strata/app/workers/enrichment.py` - ENRICH_CHUNKS job processor
-- `strata/app/workers/semantics.py` - EXTRACT_SEMANTICS job processor
-- `strata/app/workers/runner.py` - Worker process entrypoint
+- `apps/api/app/workers/extraction.py` - EXTRACT_CONTENT job processor (includes classification)
+- `apps/api/app/workers/enrichment.py` - ENRICH_CHUNKS job processor
+- `apps/api/app/workers/semantics.py` - EXTRACT_SEMANTICS job processor
+- `apps/api/app/workers/runner.py` - Worker process entrypoint
 
 **Agent:**
-- `strata_agent/strata_agent/scanner.py` - File system scanner
-- `strata_agent/strata_agent/client.py` - Strata API client
-- `strata_agent/strata_agent/config.py` - YAML config loading
-- `strata_agent/strata_agent/main.py` - CLI entrypoint
+- `topos_agent/topos_agent/scanner.py` - File system scanner
+- `topos_agent/topos_agent/client.py` - Topos API client
+- `topos_agent/topos_agent/config.py` - YAML config loading
+- `topos_agent/topos_agent/main.py` - CLI entrypoint
 
 **Configuration:**
 - `pyproject.toml` (root) - Shared tool config (ruff, mypy, bandit, vulture)

@@ -11,7 +11,7 @@ const benefits = [
     icon: Workflow,
     title: 'Richer workflows',
     description:
-      "Agents can search, read, summarize, and propose remediation over SMB/NFS using Strata's ACL-aware tools",
+      "Agents can search, read, summarize, and propose remediation over SMB/NFS using Topos's ACL-aware tools",
   },
   {
     icon: Shield,

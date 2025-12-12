@@ -1,14 +1,14 @@
-# Strata Architecture
+# Topos Architecture
 
 **Status:** Current implementation (v0)
 
-This document describes the architecture of Strata, a headless semantic and safety data plane for enterprise file systems.
+This document describes the architecture of Topos, a headless semantic and safety data plane for enterprise file systems.
 
 ---
 
 ## 1. Overview
 
-Strata is a storage-native semantic layer that sits beside existing file infrastructure (NFS/SMB shares, NAS, object stores) and makes file estates legible, queryable, and governable for AI agents.
+Topos is a storage-native semantic layer that sits beside existing file infrastructure (NFS/SMB shares, NAS, object stores) and makes file estates legible, queryable, and governable for AI agents.
 
 ### Core Capabilities
 
@@ -44,7 +44,7 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
 │         └───────────────────┼───────────────────┘                            │
 │                             │                                                │
 │                    ┌────────▼────────┐                                       │
-│                    │  Strata Agent   │  Scans files, computes hashes,        │
+│                    │  Topos Agent   │  Scans files, computes hashes,        │
 │                    │    (Python)     │  collects ACLs, sends events          │
 │                    └────────┬────────┘                                       │
 └─────────────────────────────┼───────────────────────────────────────────────┘
@@ -52,7 +52,7 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
                               │ POST /v0/ingest/events
                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Strata Control Plane                               │
+│                           Topos Control Plane                               │
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │                         FastAPI Server                                │   │
@@ -96,20 +96,20 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
 
 ### 3.1 On-Prem SMB Connector Agent
 
-**Location:** `strata_agent/`
+**Location:** `topos_agent/`
 
 The agent runs in the customer environment and:
 - Mounts SMB shares read-only
 - Scans directories periodically
 - Computes file metadata and content hashes
 - Collects ACL entries
-- Sends batched events to the Strata API
+- Sends batched events to the Topos API
 
 **Configuration (YAML):**
 ```yaml
 agent_id: "agent-uuid"
 tenant_api_key: "<redacted>"
-api_base_url: "https://api.strata.example.com"
+api_base_url: "https://api.topos.example.com"
 scan_interval_seconds: 600
 
 shares:
@@ -122,7 +122,7 @@ shares:
 
 ### 3.2 FastAPI Server
 
-**Location:** `strata/app/`
+**Location:** `apps/api/app/`
 
 The control plane API server with these routers:
 
@@ -134,7 +134,7 @@ The control plane API server with these routers:
 
 ### 3.3 Workers
 
-**Location:** `strata/app/workers/`
+**Location:** `apps/api/app/workers/`
 
 Workers poll the job queue using `SELECT ... FOR UPDATE SKIP LOCKED`:
 
@@ -146,7 +146,7 @@ Workers poll the job queue using `SELECT ... FOR UPDATE SKIP LOCKED`:
 
 ### 3.4 Services
 
-**Location:** `strata/app/services/`
+**Location:** `apps/api/app/services/`
 
 | Service | Purpose |
 |---------|---------|

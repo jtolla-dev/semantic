@@ -12,10 +12,10 @@ ENV PATH="/root/.local/bin:$PATH"
 
 # Copy project files
 COPY pyproject.toml .
-COPY strata_agent/ strata_agent/
+COPY topos_agent/ topos_agent/
 
 # Install dependencies
 RUN uv pip install --system --no-cache .
 
 # Config will be mounted at runtime
-CMD ["strata-agent", "--config", "/config/config.yaml"]
+CMD ["topos-agent", "--config", "/config/config.yaml"]

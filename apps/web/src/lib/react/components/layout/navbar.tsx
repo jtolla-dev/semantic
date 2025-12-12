@@ -3,8 +3,8 @@
 import { usePathname } from 'next/navigation'
 
 import { cn } from '@/lib/client/utils/cn'
-import { Button } from '@/lib/react/components/ui/button'
 import { Link } from '@/lib/react/components/ui/link'
+import { Logo } from '@/lib/react/components/ui/logo'
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -48,8 +48,8 @@ export function Navbar() {
         <div className="relative flex h-16 items-center justify-between">
           {/* Logo - Fixed width for consistent spacing */}
           <div className="flex w-[140px]">
-            <Link className="flex items-center space-x-2" href="/">
-              <span className="text-2xl font-bold text-foreground">Strata</span>
+            <Link className="flex items-center" href="/">
+              <Logo className="h-8 w-auto" />
             </Link>
           </div>
 

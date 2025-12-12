@@ -1,7 +1,7 @@
 [project]
-name = "strata-backend"
+name = "topos-backend"
 version = "0.1.0"
-description = "Strata v0 - AI data plane for enterprise file systems"
+description = "Topos v0 - AI data plane for enterprise file systems"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.104.0",

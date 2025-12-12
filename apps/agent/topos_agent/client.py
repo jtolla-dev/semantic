@@ -2,14 +2,14 @@ import logging
 
 import httpx
 
-from strata_agent.config import AgentSettings
-from strata_agent.scanner import FileInfo
+from topos_agent.config import AgentSettings
+from topos_agent.scanner import FileInfo
 
 logger = logging.getLogger(__name__)
 
 
-class StrataClient:
-    """HTTP client for the Strata API."""
+class ToposClient:
+    """HTTP client for the Topos API."""
 
     def __init__(self, settings: AgentSettings):
         self.settings = settings
@@ -21,7 +21,7 @@ class StrataClient:
 
     async def send_events(self, files: list[FileInfo], event_type: str = "FILE_DISCOVERED") -> dict:
         """
-        Send file events to the Strata API.
+        Send file events to the Topos API.
 
         Args:
             files: List of FileInfo objects to send

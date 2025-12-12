@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { Logo } from '@/lib/react/components/ui/logo'
 import { Separator } from '@/lib/react/components/ui/separator'
 
 export function Footer() {
@@ -21,9 +22,9 @@ export function Footer() {
       <footer className="border-t bg-background mt-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg font-bold text-foreground">Strata</span>
-              <span className="text-xs text-muted-foreground">&copy; 2025 Strata</span>
+            <div className="flex items-center space-x-3">
+              <Logo className="h-5 w-auto" />
+              <span className="text-xs text-muted-foreground">&copy; 2025 Topos</span>
             </div>
             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
               <Link href="/privacy" className="hover:text-foreground transition-colors">
@@ -47,13 +48,12 @@ export function Footer() {
         <div className="flex flex-col md:flex-row gap-8 md:justify-between">
           {/* Brand - Left aligned */}
           <div className="space-y-4 md:max-w-md">
-            <span className="text-2xl font-bold text-foreground">Strata</span>
+            <Logo className="h-8 w-auto" />
             <p className="text-sm font-semibold text-foreground mb-2">
               AI-Native Data Layer for NFS/SMB
             </p>
             <p className="text-sm text-muted-foreground">
-              Unlock your file shares for safe, auditable, more capable AI. The semantic and safety
-              data plane for enterprise file systems.
+              We're building a semantic and governance data plane for enterprise file systems, so you can unlock your file shares for safe, auditable, more capable AI.
             </p>
           </div>
 
@@ -62,10 +62,10 @@ export function Footer() {
             <h3 className="text-sm font-semibold">Contact</h3>
             <p className="text-sm text-muted-foreground">
               <a
-                href="mailto:founder@strataplane.dev"
+                href="mailto:founder@toposhq.com"
                 className="hover:text-foreground transition-colors"
               >
-                founder@strataplane.dev
+                founder@toposhq.com
               </a>
             </p>
           </div>
@@ -74,7 +74,7 @@ export function Footer() {
         <Separator className="my-8" />
 
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-          <p className="text-sm text-muted-foreground">&copy; 2025 Strata. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">&copy; 2025 Topos. All rights reserved.</p>
         </div>
       </div>
     </footer>

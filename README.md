@@ -1,8 +1,8 @@
-# Strata
+# Topos
 
 **Headless semantic and safety data plane for enterprise file systems.**
 
-Strata is a storage-native semantic layer that sits beside existing file infrastructure (NFS/SMB shares, NAS, object stores) and makes file estates legible, queryable, and governable for AI agents.
+Topos is a storage-native semantic layer that sits beside existing file infrastructure (NFS/SMB shares, NAS, object stores) and makes file estates legible, queryable, and governable for AI agents.
 
 ## What It Does
 
@@ -30,7 +30,7 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
 │         └───────────────────┼───────────────────┘                            │
 │                             │                                                │
 │                    ┌────────▼────────┐                                       │
-│                    │  Strata Agent   │  Scans files, computes hashes,        │
+│                    │  Topos Agent    │  Scans files, computes hashes,        │
 │                    │    (Python)     │  collects ACLs, sends events          │
 │                    └────────┬────────┘                                       │
 └─────────────────────────────┼───────────────────────────────────────────────┘
@@ -38,7 +38,7 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
                               │ POST /v0/ingest/events
                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Strata Control Plane                               │
+│                           Topos Control Plane                                │
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │                         FastAPI Server                                │   │
@@ -79,61 +79,65 @@ Strata is a storage-native semantic layer that sits beside existing file infrast
 ## Project Manifest
 
 ```
-strata/
+topos/
 ├── README.md                    # This file
 ├── CLAUDE.md                    # Claude Code guidance
 ├── .gitignore                   # Git ignore patterns
 ├── .pre-commit-config.yaml      # Pre-commit hooks config
-├── pyproject.toml               # Root config for ruff, mypy, etc.
+├── pyproject.toml               # Root config for ruff, pyright, etc.
 ├── Makefile                     # Development commands (run, test, check, nuke)
 ├── docker-compose.yml           # Docker services (db, api, worker, agent, samba)
 │
-├── strata/                      # Control plane (FastAPI)
-│   ├── pyproject.toml           # Python dependencies
-│   ├── Dockerfile               # Container image
-│   ├── alembic.ini              # Migration config
-│   ├── alembic/
-│   │   ├── env.py               # Alembic environment
-│   │   └── versions/
-│   │       ├── 001_initial_schema.py
-│   │       └── 002_semantic_features.py
-│   └── app/
-│       ├── main.py              # FastAPI entrypoint
-│       ├── config.py            # Settings (pydantic-settings)
-│       ├── db.py                # Database session management
-│       ├── models.py            # SQLAlchemy ORM models
-│       ├── schemas.py           # Pydantic request/response schemas
-│       ├── auth.py              # API key authentication
-│       ├── api/
-│       │   ├── admin.py         # Tenant/estate/share/agent management
-│       │   ├── ingest.py        # POST /v0/ingest/events
-│       │   └── query.py         # Sensitivity/search/RAG APIs
-│       ├── services/
-│       │   ├── extraction.py    # Text extraction + type-aware chunking
-│       │   ├── sensitivity.py   # PII/secret regex detection
-│       │   ├── exposure.py      # Exposure score calculation
-│       │   ├── classification.py    # Document type classification
-│       │   ├── semantic_extraction.py  # Structured field extraction
-│       │   ├── semantic_diff.py     # Version diff computation
-│       │   ├── policy_engine.py     # Agent policy enforcement
-│       │   └── observability.py     # RAG interaction tracking
-│       └── workers/
-│           ├── base.py          # Base worker with job claiming
-│           ├── extraction.py    # EXTRACT_CONTENT job processor
-│           ├── enrichment.py    # ENRICH_CHUNKS job processor
-│           ├── semantics.py     # EXTRACT_SEMANTICS job processor
-│           └── runner.py        # Worker process entrypoint
-│
-├── strata_agent/                # SMB connector agent
-│   ├── pyproject.toml           # Python dependencies
-│   ├── Dockerfile               # Agent container image
-│   ├── config.example.yaml      # Example configuration
-│   └── strata_agent/
-│       ├── __init__.py          # Package init
-│       ├── config.py            # YAML config loading
-│       ├── scanner.py           # File system scanner
-│       ├── client.py            # Strata API client
-│       └── main.py              # CLI entrypoint
+├── apps/
+│   ├── api/                     # Control plane (FastAPI)
+│   │   ├── pyproject.toml       # Python dependencies
+│   │   ├── Dockerfile           # Container image
+│   │   ├── alembic.ini          # Migration config
+│   │   ├── alembic/
+│   │   │   ├── env.py           # Alembic environment
+│   │   │   └── versions/
+│   │   │       ├── 001_initial_schema.py
+│   │   │       └── 002_semantic_features.py
+│   │   └── app/
+│   │       ├── main.py          # FastAPI entrypoint
+│   │       ├── config.py        # Settings (pydantic-settings)
+│   │       ├── db.py            # Database session management
+│   │       ├── models.py        # SQLAlchemy ORM models
+│   │       ├── schemas.py       # Pydantic request/response schemas
+│   │       ├── auth.py          # API key authentication
+│   │       ├── api/
+│   │       │   ├── admin.py     # Tenant/estate/share/agent management
+│   │       │   ├── ingest.py    # POST /v0/ingest/events
+│   │       │   └── query.py     # Sensitivity/search/RAG APIs
+│   │       ├── services/
+│   │       │   ├── extraction.py        # Text extraction + type-aware chunking
+│   │       │   ├── sensitivity.py       # PII/secret regex detection
+│   │       │   ├── exposure.py          # Exposure score calculation
+│   │       │   ├── classification.py    # Document type classification
+│   │       │   ├── semantic_extraction.py  # Structured field extraction
+│   │       │   ├── semantic_diff.py     # Version diff computation
+│   │       │   ├── policy_engine.py     # Agent policy enforcement
+│   │       │   └── observability.py     # RAG interaction tracking
+│   │       └── workers/
+│   │           ├── base.py      # Base worker with job claiming
+│   │           ├── extraction.py    # EXTRACT_CONTENT job processor
+│   │           ├── enrichment.py    # ENRICH_CHUNKS job processor
+│   │           ├── semantics.py     # EXTRACT_SEMANTICS job processor
+│   │           └── runner.py        # Worker process entrypoint
+│   │
+│   ├── agent/                   # SMB connector agent
+│   │   ├── pyproject.toml       # Python dependencies
+│   │   ├── Dockerfile           # Agent container image
+│   │   ├── config.example.yaml  # Example configuration
+│   │   └── topos_agent/
+│   │       ├── __init__.py      # Package init
+│   │       ├── config.py        # YAML config loading
+│   │       ├── scanner.py       # File system scanner
+│   │       ├── client.py        # Topos API client
+│   │       └── main.py          # CLI entrypoint
+│   │
+│   └── web/                     # Next.js web app
+│       └── ...
 │
 ├── docker/                      # Docker environment
 │   ├── Dockerfile.init          # Init container for bootstrapping

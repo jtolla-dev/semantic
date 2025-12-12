@@ -19,7 +19,7 @@ class ShareConfig(BaseModel):
 class AgentSettings(BaseSettings):
     """Agent configuration settings."""
 
-    agent_id: str = "strata-agent-1"
+    agent_id: str = "topos-agent-1"
     tenant_api_key: str = ""
     api_base_url: str = "http://localhost:8000"
     scan_interval_seconds: int = 600
@@ -29,7 +29,7 @@ class AgentSettings(BaseSettings):
     shares: list[ShareConfig] = []
 
     class Config:
-        env_prefix = "STRATA_"
+        env_prefix = "TOPOS_"
         env_file = ".env"
 
     @classmethod
@@ -43,9 +43,9 @@ class AgentSettings(BaseSettings):
 
         return cls(
             agent_id=data.get("agent_id", cls.model_fields["agent_id"].default),
-            tenant_api_key=os.environ.get("STRATA_API_KEY", data.get("tenant_api_key", "")),
+            tenant_api_key=os.environ.get("TOPOS_API_KEY", data.get("tenant_api_key", "")),
             api_base_url=os.environ.get(
-                "STRATA_API_BASE_URL",
+                "TOPOS_API_BASE_URL",
                 data.get("api_base_url", cls.model_fields["api_base_url"].default),
             ),
             scan_interval_seconds=data.get(

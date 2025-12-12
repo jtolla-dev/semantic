@@ -25,7 +25,7 @@ def verify_api_key(api_key: str, hashed: str) -> bool:
 
 def generate_api_key() -> str:
     """Generate a secure random API key."""
-    return f"strata_{secrets.token_urlsafe(32)}"
+    return f"topos_{secrets.token_urlsafe(32)}"
 
 
 async def get_current_tenant(

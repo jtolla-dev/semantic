@@ -1,6 +1,6 @@
-# Founder Thesis – Strata
+# Founder Thesis – Topos
 
-**Working Name:** Strata
+**Working Name:** Topos
 **Tagline:** The AI data plane for enterprise file estates
 
 ---
@@ -47,11 +47,11 @@ The missing layer is a **storage-native, AI-facing data plane** for enterprise f
 
 ---
 
-## 3. Solution: Strata
+## 3. Solution: Topos
 
-Strata is a **headless semantic and safety data plane** for enterprise file systems. It sits next to existing storage and identity systems and exposes an AI-native interface to file estates.
+Topos is a **headless semantic and safety data plane** for enterprise file systems. It sits next to existing storage and identity systems and exposes an AI-native interface to file estates.
 
-**What Strata does**
+**What Topos does**
 
 1. **Connects to file estates**
 
@@ -83,7 +83,7 @@ Strata is a **headless semantic and safety data plane** for enterprise file syst
 
      * What each agent retrieved, under which principal, from which documents, and why.
 
-Strata does **not** replace existing storage or DSPM consoles. It becomes the **runtime data plane** that AI platforms and security teams share.
+Topos does **not** replace existing storage or DSPM consoles. It becomes the **runtime data plane** that AI platforms and security teams share.
 
 ---
 
@@ -102,9 +102,9 @@ Strata does **not** replace existing storage or DSPM consoles. It becomes the **
 
   * Define sensitivity policies and acceptable use.
   * Consume exposure maps and audit trails.
-  * Use Strata as the enforcement and evidence layer for AI over file estates.
+  * Use Topos as the enforcement and evidence layer for AI over file estates.
 
-In many large accounts, Strata will:
+In many large accounts, Topos will:
 
 * Integrate with existing **DSPM / data security platforms** (for labels, findings),
 * While owning the **agent-facing, policy-aware retrieval and runtime control**.
@@ -138,7 +138,7 @@ The pre-seed round is explicitly to:
 
 * Build v0,
 * Run 3–5 design-partner deployments on real shares, and
-* Prove that Strata is both **technically sound** and **economically compelling** as the AI data plane for file estates.
+* Prove that Topos is both **technically sound** and **economically compelling** as the AI data plane for file estates.
 
 ---
 
@@ -153,7 +153,7 @@ I’ve spent the last ~10 years as an engineering leader at **Nasuni**, a cloud-
   * Building secure, cloud-native control planes that enterprises trust.
   * Early adoption and integration of AI inside a storage company.
 
-This gives Strata a rare combination at day zero:
+This gives Topos a rare combination at day zero:
 
 * Deep understanding of **enterprise file estates and ACLs**, and
 * Hands-on experience building **management planes at scale**, and

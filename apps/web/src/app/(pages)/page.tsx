@@ -5,8 +5,6 @@ import {
   BenefitsSection,
   CTASection,
   HeroSection,
-  TeamsSection,
-  WhyStrataSection,
 } from '@/lib/react/components/views/landing'
 
 export default function LandingPage() {

@@ -1,13 +1,13 @@
-# Strata SMB Connector Agent Configuration
+# Topos SMB Connector Agent Configuration
 # Copy this file to config.yaml and customize for your environment
 
 # Unique identifier for this agent instance
-agent_id: "strata-agent-1"
+agent_id: "topos-agent-1"
 
-# API key for authentication (can also be set via STRATA_API_KEY env var)
-# tenant_api_key: "strata_xxxxxxxxxxxx"
+# API key for authentication (can also be set via TOPOS_API_KEY env var)
+# tenant_api_key: "topos_xxxxxxxxxxxx"
 
-# Strata API base URL (can also be set via STRATA_API_BASE_URL env var)
+# Topos API base URL (can also be set via TOPOS_API_BASE_URL env var)
 api_base_url: "http://localhost:8000"
 
 # Interval between scans in seconds

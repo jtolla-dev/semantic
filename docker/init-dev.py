@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Initialize the Strata development environment.
+Initialize the Topos development environment.
 
 This script:
 1. Waits for the API to be ready
@@ -148,7 +148,7 @@ def create_share(client: httpx.Client, estate_id: str, api_key: str) -> dict:
 def main():
     """Main initialization routine."""
     print("=" * 60)
-    print("Strata Development Environment Initialization")
+    print("Topos Development Environment Initialization")
     print("=" * 60)
     print()
 
@@ -182,7 +182,7 @@ def main():
     print(f"  {api_key}")
     print()
     print("Set this in your environment or agent config:")
-    print(f"  export STRATA_API_KEY={api_key}")
+    print(f"  export TOPOS_API_KEY={api_key}")
     print()
 
     # Write API key to a file for the agent to read

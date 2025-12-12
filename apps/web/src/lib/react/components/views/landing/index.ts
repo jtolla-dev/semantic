@@ -1,6 +1,6 @@
 export { HeroSection } from './HeroSection'
 export { ArchitectureSection } from './ArchitectureSection'
 export { BenefitsSection } from './BenefitsSection'
-export { WhyStrataSection } from './WhyStrataSection'
+export { WhyToposSection } from './WhyToposSection'
 export { TeamsSection } from './TeamsSection'
 export { CTASection } from './CTASection'

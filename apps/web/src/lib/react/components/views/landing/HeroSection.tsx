@@ -13,7 +13,7 @@ export function HeroSection() {
           </h1>
 
           <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
-            Strata is an AI-ready governance and semantic layer for unstructured data.
+            Topos is an AI-ready governance and semantic layer for unstructured data.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-x-6">

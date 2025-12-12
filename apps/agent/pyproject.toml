@@ -1,7 +1,7 @@
 [project]
-name = "strata-agent"
+name = "topos-agent"
 version = "0.1.0"
-description = "Strata SMB Connector Agent"
+description = "Topos SMB Connector Agent"
 requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.25.0",
@@ -21,7 +21,7 @@ dev = [
 ]
 
 [project.scripts]
-strata-agent = "strata_agent.main:main"
+topos-agent = "topos_agent.main:main"
 
 [build-system]
 requires = ["hatchling"]

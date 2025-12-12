@@ -20,10 +20,10 @@ export function ArchitectureSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            How Strata Fits Between Storage and AI
+            How Topos Fits Between Storage and AI
           </h2>
           <p className="mt-4 text-lg text-slate-400 max-w-3xl mx-auto">
-            Strata aims to turn your high-value NFS/SMB shares into a semantic,
+            Topos aims to turn your high-value NFS/SMB shares into a semantic,
             policy-aware data plane.
           </p>
         </div>
@@ -109,10 +109,10 @@ export function ArchitectureSection() {
               </svg>
             </div>
 
-            {/* Strata Data Plane */}
+            {/* Topos Data Plane */}
             <div className="flex-[1.5] w-full max-w-2xl px-4 py-8 relative flex flex-col items-center justify-center z-20">
               <h3 className="text-xl font-bold text-white mb-6 text-center absolute top-0">
-                Strata Data Plane
+                Topos Data Plane
               </h3>
 
               <div className="glass-panel rounded-[2rem] p-8 lg:p-10 w-full">
@@ -198,7 +198,7 @@ export function ArchitectureSection() {
               </div>
 
               <p className="text-slate-400 text-sm leading-relaxed max-w-[280px]">
-                Agents call Strata through ACL-aware, purpose-built tools, like{' '}
+                Agents call Topos through ACL-aware, purpose-built tools, like{' '}
                 <span className="text-slate-300">Search</span>,{' '}
                 <span className="text-slate-300">Read</span>,{' '}
                 <span className="text-slate-300">Summarize</span>, and{' '}

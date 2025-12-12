@@ -1,7 +1,7 @@
-# Strata Agent Configuration for Docker Development Environment
-# API key is set via STRATA_API_KEY environment variable
+# Topos Agent Configuration for Docker Development Environment
+# API key is set via TOPOS_API_KEY environment variable
 
-agent_id: dev-agent-1
+agent_id: topos-dev-agent-1
 api_base_url: http://api:8000
 scan_interval_seconds: 30  # Shorter interval for dev
 

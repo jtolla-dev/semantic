@@ -39,7 +39,7 @@ async def run_workers():
 
 def main():
     """Entry point for the worker process."""
-    logger.info("Starting Strata workers")
+    logger.info("Starting Topos workers")
     asyncio.run(run_workers())
 
 

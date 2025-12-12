@@ -5,9 +5,9 @@ import signal
 import sys
 from pathlib import Path
 
-from strata_agent.client import StrataClient
-from strata_agent.config import AgentSettings
-from strata_agent.scanner import scan_share
+from topos_agent.client import ToposClient
+from topos_agent.config import AgentSettings
+from topos_agent.scanner import scan_share
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class Agent:
-    """Strata SMB Connector Agent."""
+    """Topos SMB Connector Agent."""
 
     def __init__(self, settings: AgentSettings):
         self.settings = settings
-        self.client = StrataClient(settings)
+        self.client = ToposClient(settings)
         self.running = False
 
     async def scan_and_send(self) -> None:
@@ -54,7 +54,7 @@ class Agent:
         """Run the agent continuously."""
         self.running = True
         logger.info(
-            f"Starting Strata agent {self.settings.agent_id} "
+            f"Starting Topos agent {self.settings.agent_id} "
             f"(scan interval: {self.settings.scan_interval_seconds}s)"
         )
 
@@ -97,7 +97,7 @@ async def run_continuous(settings: AgentSettings) -> None:
 
 def main() -> None:
     """Main entry point for the agent."""
-    parser = argparse.ArgumentParser(description="Strata SMB Connector Agent")
+    parser = argparse.ArgumentParser(description="Topos SMB Connector Agent")
     parser.add_argument(
         "-c",
         "--config",
@@ -133,7 +133,7 @@ def main() -> None:
 
     # Validate configuration
     if not settings.tenant_api_key:
-        logger.error("No API key configured. Set STRATA_API_KEY or add to config file.")
+        logger.error("No API key configured. Set TOPOS_API_KEY or add to config file.")
         sys.exit(1)
 
     if not settings.shares:

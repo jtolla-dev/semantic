@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Strata Development Commands"
+	@echo "Topos Development Commands"
 	@echo ""
 	@echo "  make run      - Start all services (db, api, worker, agent, samba)"
 	@echo "  make stop     - Stop all services"
@@ -47,7 +47,7 @@ fmt:
 
 # Run type checking
 typecheck:
-	uvx pyright strata/ strata_agent/
+	uvx pyright apps/api/ apps/agent/
 
 # Run database migrations
 migrate:

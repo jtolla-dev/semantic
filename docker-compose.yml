@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: strata
+      POSTGRES_DB: topos
     ports:
       - "5432:5432"
     volumes:
@@ -19,12 +19,12 @@ services:
 
   api:
     build:
-      context: ./strata
+      context: ./apps/api
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/strata
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/topos
       ENABLE_EMBEDDINGS: "false"
     depends_on:
       db:
@@ -41,11 +41,11 @@ services:
 
   worker:
     build:
-      context: ./strata
+      context: ./apps/api
       dockerfile: Dockerfile
     command: python -m app.workers.runner
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/strata
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/topos
       ENABLE_EMBEDDINGS: "false"
     depends_on:
       db:
@@ -77,13 +77,13 @@ services:
     volumes:
       - shared_config:/config
 
-  # Strata agent for scanning documents
+  # Topos agent for scanning documents
   agent:
     build:
-      context: ./strata_agent
+      context: ./apps/agent
       dockerfile: Dockerfile
     environment:
-      STRATA_API_BASE_URL: http://api:8000
+      TOPOS_API_BASE_URL: http://api:8000
     depends_on:
       init:
         condition: service_completed_successfully
@@ -94,9 +94,9 @@ services:
     command: >
       sh -c '
         if [ -f /config/api-key ]; then
-          export STRATA_API_KEY=$$(cat /config/api-key);
+          export TOPOS_API_KEY=$$(cat /config/api-key);
         fi;
-        strata-agent --config /config/config.yaml
+        topos-agent --config /config/config.yaml
       '
 
 volumes:

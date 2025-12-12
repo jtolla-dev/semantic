@@ -52,7 +52,7 @@ ignore = [
 "**/docker/**" = ["ARG", "PTH"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "strata_agent"]
+known-first-party = ["app", "topos_agent"]
 
 [tool.pyright]
 pythonVersion = "3.11"

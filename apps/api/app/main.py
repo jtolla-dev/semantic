@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 app = FastAPI(
-    title="Strata API",
+    title="Topos API",
     description="AI data plane for enterprise file systems",
     version="0.1.0",
 )
