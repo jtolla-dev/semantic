@@ -28,7 +28,7 @@ export function CTASection() {
               className="h-12 px-8 bg-white text-gray-900 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-300"
               asChild
             >
-              <Link href="mailto:founder@usetopos.com">
+              <Link href="https://calendly.com/jay-usetopos/30min">
                 Book a discovery call
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

@@ -22,7 +22,7 @@ export function HeroSection() {
               className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-primary to-gray-800 hover:from-primary/90 hover:to-gray-800/90 shadow-lg hover:shadow-xl transition-all duration-300"
               asChild
             >
-              <Link href="#cta">
+              <Link href="https://calendly.com/jay-usetopos/30min">
                 Book a discovery call
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
